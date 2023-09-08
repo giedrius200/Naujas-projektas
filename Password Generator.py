@@ -2,6 +2,8 @@ import string
 import subprocess 
 import random
 import pyperclip
+import os
+import sys
 from os import system
 
 
@@ -160,7 +162,35 @@ class Password_Genrator(Password_Checking):
         if dec == 'cn' : self.About_Password()    
         else: return self.Genrates_password()
 
-if __name__ == '__main__':
+def login():
+    # Tikrinti, ar yra saugojimo duomenų failas su prisijungimo informacija
+    if os.path.exists("login_info.txt"):
+        with open("login_info.txt", "r") as f:
+            stored_username, stored_password = f.readline().strip().split(",")
+        username = input("Įveskite vartotojo vardą: ")
+        password = input("Įveskite slaptažodį: ")
+        if username == stored_username and password == stored_password:
+            print("Prisijungėte sėkmingai!")
+        else:
+            print("Neteisingas vartotojo vardas arba slaptažodis. Bandykite dar kartą.")
+            login()
+    else:
+        print("Sukurkite pirmąjį prisijungimą.")
+        create_login()
+
+def create_login():
+    username = input("Sukurkite vartotojo vardą: ")
+    password = input("Sukurkite slaptažodį: ")
+    with open("login_info.txt", "w") as f:
+        f.write(f"{username},{password}")
+    print("Prisijungimas sukurtas sėkmingai!")
+    
+def exit_program():
+    print("Programa baigia darbą. Viso gero!")
+    sys.exit()
+    
+def main():
+    login()
     while True:
         try:
             clear_screen()
@@ -170,4 +200,10 @@ if __name__ == '__main__':
                 Password_Checking().main()
             elif ur == 2:
                 Password_Genrator().About_Password()
-        except: pass
+            elif ur == 3:
+                exit_program()
+        except KeyboardInterrupt:  # Catch KeyboardInterrupt (Ctrl+C) to exit gracefully
+            exit_program()
+
+if __name__ == '__main__':
+    main()
