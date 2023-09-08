@@ -194,7 +194,7 @@ def main():
     while True:
         try:
             clear_screen()
-            print("\n1 | Check Password Strength\n2 | Generate Password")
+            print("\n1 | Check Password Strength\n2 | Generate Password\n3 | Išeiti iš programos")
             ur = int(input(":"))    
             if ur == 1:
                 Password_Checking().main()
