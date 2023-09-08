@@ -4,6 +4,7 @@ import random
 import pyperclip
 import os
 import sys
+import hashlib
 from os import system
 
 
@@ -162,39 +163,79 @@ class Password_Genrator(Password_Checking):
         if dec == 'cn' : self.About_Password()    
         else: return self.Genrates_password()
 
-def login():
-    # Tikrinti, ar yra saugojimo duomenų failas su prisijungimo informacija
+def create_login():
+    username = input("Create a username: ")
+    password = input("Create a password: ")
+    
+    # Hash the password before storing it
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    
+    with open("login_info.txt", "w") as f:
+        f.write(f"{username},{password_hash}")
+    print("Login created successfully!")
+
+def verify_login(username, password):
+    # Read stored login information
     if os.path.exists("login_info.txt"):
         with open("login_info.txt", "r") as f:
-            stored_username, stored_password = f.readline().strip().split(",")
-        username = input("Įveskite vartotojo vardą: ")
-        password = input("Įveskite slaptažodį: ")
-        if username == stored_username and password == stored_password:
-            print("Prisijungėte sėkmingai!")
-        else:
-            print("Neteisingas vartotojo vardas arba slaptažodis. Bandykite dar kartą.")
-            login()
-    else:
-        print("Sukurkite pirmąjį prisijungimą.")
-        create_login()
+            stored_username, stored_password_hash = f.readline().strip().split(",")
+        
+        # Hash the entered password for verification
+        entered_password_hash = hashlib.sha256(password.encode()).hexdigest()
+        
+        if username == stored_username and entered_password_hash == stored_password_hash:
+            return True
+    return False
 
-def create_login():
-    username = input("Sukurkite vartotojo vardą: ")
-    password = input("Sukurkite slaptažodį: ")
-    with open("login_info.txt", "w") as f:
-        f.write(f"{username},{password}")
-    print("Prisijungimas sukurtas sėkmingai!")
+def login():
+    if os.path.exists("login_info.txt"):
+        while True:
+            username = input("Enter your username: ")
+            password = input("Enter your password: ")
+            if verify_login(username, password):
+                print("Login successful!")
+                break
+            else:
+                print("Invalid username or password. Please try again.")
+    else:
+        print("Create the initial login.")
+        create_login()
     
 def exit_program():
     print("Programa baigia darbą. Viso gero!")
     sys.exit()
-    
+
+def change_password():
+    if os.path.exists("login_info.txt"):
+        with open("login_info.txt", "r") as f:
+            stored_username, stored_password_hash = f.readline().strip().split(",")
+        print(f"Changing password for user: {stored_username}")
+        
+        # Prompt for the current password for verification
+        current_password = input("Enter your current password: ")
+        
+        # Verify the current password
+        if verify_login(stored_username, current_password):
+            new_password = input("Enter a new password: ")
+            
+            # Hash the new password before storing it
+            new_password_hash = hashlib.sha256(new_password.encode()).hexdigest()
+            
+            with open("login_info.txt", "w") as f:
+                f.write(f"{stored_username},{new_password_hash}")
+            
+            print("Password changed successfully!")
+        else:
+            print("Invalid current password. Password change failed.")
+    else:
+        print("No login information found. Create a login first.")
+
 def main():
     login()
     while True:
         try:
             clear_screen()
-            print("\n1 | Check Password Strength\n2 | Generate Password\n3 | Išeiti iš programos")
+            print("\n1 | Check Password Strength\n2 | Generate Password\n3 | Išeiti iš programos\n4 | Pakeisti prisijungimo slaptažodį")
             ur = int(input(":"))    
             if ur == 1:
                 Password_Checking().main()
@@ -202,6 +243,8 @@ def main():
                 Password_Genrator().About_Password()
             elif ur == 3:
                 exit_program()
+            elif ur == 4:
+                change_password()
         except KeyboardInterrupt:  # Catch KeyboardInterrupt (Ctrl+C) to exit gracefully
             exit_program()
 
