@@ -164,46 +164,42 @@ class PasswordManager:
         self.file_password = None
         self.fernet = None
 
-        self.load_file_password()  # Load the file password here
-        self.initialize_fernet()
-        self.decrypt_passwords()  # Decrypt passwords when the app starts
+        choice = input("Do you want to generate a new file password or enter a previously generated one? (generate/enter): ")
+        if choice.lower() == 'generate':
+            self.file_password = self.generate_file_password()
+            print("Your file password is:", self.file_password)
+            input("Press Enter to continue...")
+        elif choice.lower() == 'enter':
+            self.enter_file_password()
 
+        # Initialize Fernet based on the user's choice
+        self.initialize_fernet()
+    
     def generate_file_password(self):
         file_password = Fernet.generate_key().decode()
+        return file_password
+    
+    def enter_file_password(self):
+        # Ask the user to enter a previously generated file password
+        file_password = input("Enter your previously generated file password: ")
         self.file_password = file_password
-
-        with open("file_password.txt", "w") as f:
-            f.write(file_password)
-
-        print("File password created successfully!")
-
-    def load_file_password(self):
-        if os.path.exists("file_password.txt"):
-            with open("file_password.txt", "r") as f:
-                self.file_password = f.read()
 
     def initialize_fernet(self):
         if self.file_password is None:
             print("File password is required to load passwords from a file. Please create or enter the file password.")
-            self.create_file_password()
         else:
             try:
                 self.fernet = Fernet(self.file_password.encode())
+                self.decrypt_passwords()  # Decrypt passwords when the app starts
             except ValueError:
                 print("Invalid file password. Please create or enter a valid file password.")
                 self.create_file_password()
 
-    def create_file_password(self):
-        # Generate a random 32-character base64 password
-        file_password = Fernet.generate_key().decode()
+    def enter_file_password(self):
+        # Ask the user to enter a previously generated file password
+        file_password = input("Enter your previously generated file password: ")
         self.file_password = file_password
-
-        # Save the generated password securely, e.g., in a file
-        with open("file_password.txt", "w") as f:
-            f.write(file_password)
-
-        print("File password created successfully!")
-
+    
     def store_password(self, website, password):
         if self.fernet is None:
             print("Please initialize the Fernet encryption first.")
