@@ -5,10 +5,7 @@ import os
 import sys
 import hashlib
 from os import system
-
 from cryptography.fernet import Fernet
-
-import subprocess
 
 def _copy_(data):
     pyperclip.copy("{}".format(data))
@@ -16,10 +13,7 @@ def _copy_(data):
 def clear_screen():
     return system("cls")
 
-class stringc:
-    def Num_of_lowercase(self, _String):
-        return len([i for i in _String if i in string.ascii_lowercase])
-
+class PasswordChecking:
     def Num_of_lowercase(self, _String):
         return len([i for i in _String if i in string.ascii_lowercase])
 
@@ -38,7 +32,7 @@ class stringc:
     def Num_of_whitespace(self, _String):
         return len([i for i in _String if i in string.whitespace])
 
-class Password_Checking(stringc):
+class PasswordCheckingStrength(PasswordChecking):
     def __init__(self):
         self._lowercase = {1: 0.5, 2: 0.5, 4: 2, 6: 3}
         self._uppercase = {1: 0.5, 2: 0.5, 4: 2, 6: 3}
@@ -47,115 +41,120 @@ class Password_Checking(stringc):
         self._whitespace = {1: 1, 2: 1.5, 4: 2}
         self._special_character = {1: 1, 2: 1.5, 4: 2}
 
-        self.keys_group = [self._lowercase, self._uppercase,
-                           self._letters, self._digits, self._whitespace,
-                           self._special_character]
+        self.keys_group = [
+            self._lowercase, self._uppercase,
+            self._letters, self._digits, self._whitespace,
+            self._special_character
+        ]
 
     def get_strength_point(self, Password):
-        self.Key_data = [self.Num_of_lowercase(Password), self.Num_of_uppercase(Password),
-                         self.Num_of_letters(Password), self.Num_of_digits(Password),
-                         self.Num_of_whitespace(Password), self.Num_of_punctuation(Password)]
+        Key_data = [
+            self.Num_of_lowercase(Password), self.Num_of_uppercase(Password),
+            self.Num_of_letters(Password), self.Num_of_digits(Password),
+            self.Num_of_whitespace(Password), self.Num_of_punctuation(Password)
+        ]
 
-        self.Points = 0
+        Points = 0
         for ii in range(len(self.keys_group)):
-            self.kgro = self.keys_group[ii]
+            kgro = self.keys_group[ii]
 
-            for i in self.kgro:
-                if i <= self.Key_data[ii]:
-                    self.Points += self.kgro[i]
+            for i in kgro:
+                if i <= Key_data[ii]:
+                    Points += kgro[i]
 
         if 20 >= len(Password):
-            self.Points += (len(Password) / 2)
+            Points += (len(Password) / 2)
         else:
-            self.Points += 10
+            Points += 10
 
-        return self.Points
+        return Points
 
-    def Password_strength(self, Points):
+    def password_strength(self, Points):
         if Points <= 10:
             return "Strength: Weak"
-        elif Points > 10 and Points <= 15:
+        elif 10 < Points <= 15:
             return "Strength: Normal"
-        elif Points > 15 and Points <= 20:
+        elif 15 < Points <= 20:
             return "Strength: Good"
-        elif Points > 20 and Points <= 30:
+        elif 20 < Points <= 30:
             return "Strength: Strong"
-        elif Points > 30 and Points <= 44.5:
+        elif 30 < Points <= 44.5:
             return "Strength: Strongest"
         elif Points >= 45:
             return "Strength: Super Strong"
 
     def main(self):
         while True:
-            print('\n')
-            print("q | STOP".center(20, '-'))
-            self._Password = input(":")
-            self.Points = self.get_strength_point(self._Password)
+            print('\n' + "q | STOP".center(20, '-'))
+            Password = input(":")
+            Points = self.get_strength_point(Password)
 
-            print("Points : ", self.Points)
-            print("Length : ", len(self._Password))
-            print(self.Password_strength(self.Points))
+            print("Points : ", Points)
+            print("Length : ", len(Password))
+            print(self.password_strength(Points))
 
-            if self._Password == "q":
+            if Password == "q":
                 clear_screen()
                 break
 
-class Password_Genrator(Password_Checking):
-    def About_Password(self):
+class PasswordGenerator(PasswordCheckingStrength):
+    def about_password(self):
         print(("-" * 20) + "q | Stop" + ("-" * 20))
 
         print("\nWhat You Want Into Your Password:")
-        self.Length_pass = int(input("Length: "))
+        Length_pass = int(input("Length: "))
 
-        self.querys = ["Digits (y/n):", "Lowercase (y/n):", "Uppercase (y/n):",
-                       "Special Characters (y/n):", "Whitespace (y/n):"]
-        self.yn_list = list()
+        querys = ["Digits (y/n):", "Lowercase (y/n):", "Uppercase (y/n):",
+                  "Special Characters (y/n):", "Whitespace (y/n):"]
+        yn_list = list()
 
         for i in range(5):
-            _input = input(self.querys[i])
+            _input = input(querys[i])
             if _input != 'y' and _input != 'Y':
-                self.yn_list.append('n')
+                yn_list.append('n')
             else:
-                self.yn_list.append(_input)
+                yn_list.append(_input)
 
-        self.Generate_Password()
+        self.generate_password(Length_pass, yn_list)
 
-    def Generate_Password(self):
+    def generate_password(self, Length_pass, yn_list):
         clear_screen()
-        self.Keyboard = [list(string.digits), list(string.ascii_lowercase), list(string.ascii_uppercase),
-                         list(string.punctuation), [' ']]
-        self.Demand_list = []
+        Keyboard = [
+            list(string.digits), list(string.ascii_lowercase),
+            list(string.ascii_uppercase), list(string.punctuation), [' ']
+        ]
+        Demand_list = []
 
         for i in range(5):
-            if self.yn_list[i] == 'y' or self.yn_list[i] == 'Y':
-                for ii in range(self.Length_pass):
-                    rrc = random.choice(self.Keyboard[i])
-                    self.Demand_list.append(rrc)
+            if yn_list[i] == 'y' or yn_list[i] == 'Y':
+                for ii in range(Length_pass):
+                    rrc = random.choice(Keyboard[i])
+                    Demand_list.append(rrc)
 
-        self.password_ = []
-        for o in range(self.Length_pass):
-            rp = random.choice(self.Demand_list)
-            self.password_.append(rp)
+        password_ = []
+        for o in range(Length_pass):
+            rp = random.choice(Demand_list)
+            password_.append(rp)
 
-        print('-' * (10 + len(self.password_)))
-        PP = "".join(self.password_)
+        print('-' * (10 + len(password_)))
+        PP = "".join(password_)
         print("Password: {}".format(PP))
 
-        point = Password_Checking().get_strength_point(self.password_)
+        point = self.get_strength_point(password_)
         print("Points : ", point)
-        print(Password_Checking().Password_strength(point))
+        print(self.password_strength(point))
 
-        print('-' * (10 + len(self.password_)))
+        print('-' * (10 + len(password_)))
 
         print("Password Is Copied To Clipboard\n")
-        data = "".join(self.password_)
+        data = "".join(password_)
         _copy_(data)
 
         dec = input("\nPress Enter To Generate Again\nPress 'cn' To Create New: ")
         if dec == 'cn':
-            self.About_Password()
+            self.about_password()
         else:
-            return self.Generate_Password()
+            return self.generate_password(Length_pass, yn_list)
 
 class PasswordManager:
     def __init__(self, username):
@@ -175,7 +174,7 @@ class PasswordManager:
                 choice = input("Passwords file not found. Do you want to generate a new file password or exit? (generate/exit): ")
                 if choice.lower() == 'generate':
                     self.file_password = self.generate_file_password()
-                    print(f"Your file password is: {self.file_password}")
+                    print(f"Your file password is: {self.file_password}\n Slaptažodį būtinai įsiminkite")
                     input("Press Enter to continue...")
                 elif choice.lower() == 'exit':
                     print("Goodbye!")
@@ -193,19 +192,24 @@ class PasswordManager:
     
     def enter_file_password(self):
         # Ask the user to enter a previously generated file password
-        file_password = input("Enter your previously generated file password: ")
-        self.file_password = file_password
+        while True:
+            file_password = input("Enter your previously generated file password: ")
+            if len(file_password) == 44:  # Fernet key must be 44 characters long
+                self.file_password = file_password
+                break
+            else:
+                print("Invalid file password. Please enter a valid 44-character file password.")
+
 
     def initialize_fernet(self):
-        if self.file_password is None:
-            print("File password is required to load passwords from a file. Please create or enter the file password.")
-        else:
-            try:
-                self.fernet = Fernet(self.file_password.encode())
-                self.decrypt_passwords()  # Decrypt passwords when the app starts
-            except ValueError:
-                print("Invalid file password. Please create or enter a valid file password.")
-                self.create_file_password()
+        while self.file_password is None:
+            self.enter_file_password()
+        try:
+            self.fernet = Fernet(self.file_password.encode())
+            self.decrypt_passwords()  # Decrypt passwords when the app starts
+        except ValueError:
+            print("Invalid file password. Please create or enter a valid 44-character file password.")
+            self.enter_file_password()
 
     def store_password(self, website, password):
         if self.fernet is None:
@@ -331,7 +335,6 @@ def verify_login(username, password):
 
 def login(username):
     while True:
-        #username = input("Enter your username: ")
         user_directory = f"data/{username}"
 
         if os.path.exists(user_directory):
@@ -395,9 +398,9 @@ def main(username):
             print("5. Password Manager")
             ur = int(input(":"))
             if ur == 1:
-                Password_Checking().main()
+                PasswordCheckingStrength().main()
             elif ur == 2:
-                Password_Genrator().About_Password()
+                PasswordGenerator().about_password()
             elif ur == 3:
                 exit_program(password_manager)
             elif ur == 4:
