@@ -24,39 +24,10 @@ This suite provides a set of utilities to manage and assess passwords. The main 
 
 ## Usage:
 
-### Password Strength Checker:
-
-The main method will prompt the user to enter a password. The strength of the password will be displayed based on various metrics.
+### Password generator app:
 
 ```python
-checker = PasswordCheckingStrength()
-checker.main()
-```
-### Password Generator:
-
-Use the about_password method to prompt the user for password preferences and generate a password accordingly.
-
-```python
-
-generator = PasswordGenerator()
-generator.about_password()
-```
-
-### Password Manager:
-
-Initialize the manager with a username, then call the run method.
-
-```python
-
-manager = PasswordManager("YourUsername")
-manager.run()
-```
-
-### Remember: Before using the manager for a user, you need to call the create_login method for that user.
-
-```python
-
-create_login("YourUsername")
+python .\latest_Password_Generator.py
 ```
 
 ### Additional Functions:
