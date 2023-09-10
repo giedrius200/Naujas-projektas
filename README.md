@@ -40,3 +40,5 @@ python .\latest_Password_Generator.py
 ### Important:
 
 Always remember the file password given by the password manager. It is crucial for decrypting stored passwords.
+
+[Licensed under the terms of the LICENSE.md](LICENSE.md)
