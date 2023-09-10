@@ -176,6 +176,23 @@ class PasswordManager:
         for website, encrypted_password in self.passwords.items():
             decrypted_password = self.fernet.decrypt(encrypted_password.encode()).decode()
             print(f"Website: {website}, Password: {decrypted_password}")
+            
+    def delete_password(self):
+        if not self.passwords:
+            print("No passwords stored.")
+            return
+
+        print("\nStored Websites:")
+        for idx, website in enumerate(self.passwords.keys(), 1):
+            print(f"{idx}. {website}")
+
+        try:
+            choice = int(input("\nEnter the number of the website you want to delete: "))
+            website_to_delete = list(self.passwords.keys())[choice - 1]
+            del self.passwords[website_to_delete]
+            print(f"Password for {website_to_delete} has been deleted.")
+        except (ValueError, IndexError):
+            print("Invalid choice. Please select a valid number.")
 
 def create_login(username):
     password = input(f"Create a login password for {username}: ")
@@ -228,7 +245,8 @@ def password_manager_menu(password_manager):
         print("1. Store Password")
         print("2. Retrieve Password")
         print("3. View Stored Passwords")
-        print("4. Return to Main Menu")
+        print("4. Delete Password")
+        print("5. Return to Main Menu")
         choice = input("Enter your choice: ")
 
         if choice == "1":
@@ -243,6 +261,8 @@ def password_manager_menu(password_manager):
             input("\nPress Enter to return to the manager menu...")
             clear_screen()
         elif choice == "4":
+            password_manager.delete_password()
+        elif choice == "5":
             clear_screen()
             break
         else:
