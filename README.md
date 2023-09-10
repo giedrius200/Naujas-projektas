@@ -1,62 +1,68 @@
-# Python Password Manager
+# Password Utilities Suite
 
-A secure and user-friendly Python password manager application with features for password strength checking, password generation, and secure password storage.
+This suite provides a set of utilities to manage and assess passwords. The main features include password strength checking, password generation, and a basic password manager.
 
-## Introduction
+## Features:
 
-The Python Password Manager is a command-line tool that allows you to manage your passwords securely. It provides the following key features:
+1. **Password Strength Checker**: Determine the strength of a given password.
+2. **Password Generator**: Create strong passwords based on user preferences.
+3. **Password Manager**: Store, retrieve, and view passwords for different websites. Passwords are encrypted using the Fernet symmetric encryption.
 
-- **Password Strength Checking:** Evaluate the strength of your passwords and receive recommendations for stronger ones.
+## Modules:
 
-- **Password Generation:** Generate strong and secure passwords tailored to your preferences.
+- **Pyperclip**: Used to copy the password to the clipboard.
+- **OS and Sys**: Basic system operations and exit control.
+- **Hashlib**: SHA256 hashing for user passwords.
+- **Cryptography's Fernet**: For encrypting stored passwords.
 
-- **Password Storage:** Safely store and manage passwords for different websites.
+## Classes:
 
-- **Master Password:** Protect your stored passwords with a master password.
+1. **PasswordChecking**: Contains methods to count occurrences of different types of characters in a given string.
+2. **PasswordCheckingStrength**: Inherits from `PasswordChecking` and provides functionality to determine password strength.
+3. **PasswordGenerator**: Inherits from `PasswordCheckingStrength` and provides password generation functionality.
+4. **PasswordManager**: Allows users to store and retrieve passwords for different websites. The passwords are stored in an encrypted format.
 
-## Features
+## Usage:
 
-### Password Strength Checking
+### Password Strength Checker:
 
-Evaluate the strength of your passwords by running the Python Password Manager and entering the password when prompted. The tool will provide a strength rating based on the password's characteristics.
+The main method will prompt the user to enter a password. The strength of the password will be displayed based on various metrics.
 
-### Password Generation
+```python
+checker = PasswordCheckingStrength()
+checker.main()
+```
+###Password Generator:
 
-Generate strong and secure passwords by selecting the "Generate Password" option in the main menu. You can specify the length and character types for the generated password.
+Use the about_password method to prompt the user for password preferences and generate a password accordingly.
 
-### Password Storage
+```python
 
-The Password Manager feature allows you to store and manage passwords securely. Access it by logging in with your master password.
+generator = PasswordGenerator()
+generator.about_password()
+```
+###Password Manager:
 
-## Password Manager
+Initialize the manager with a username, then call the run method.
 
-### Creating a Login
+```python
 
-Before using the Password Manager, create a login password for your account. This password is used to access and manage your stored passwords.
+manager = PasswordManager("YourUsername")
+manager.run()
+```
+Remember: Before using the manager for a user, you need to call the create_login method for that user.
 
-### Logging In
+```python
 
-Enter your login password to access the main menu of the Password Manager.
+create_login("YourUsername")
+```
+###Additional Functions:
 
-### Changing the Master Password
+    ##login: Authenticates a user using their login password.
+    ##create_login: Allows a new user to create a password for accessing the suite.
+    ##verify_login: Verifies the hashed login password against the stored hash for a given user.
+    ##change_password: Allows a user to change their login password.
 
-For added security, change your master password by following the on-screen instructions.
+###Important:
 
-### Main Menu
-
-The main menu of the Password Manager provides various options for managing your passwords and changing settings.
-
-## Contributing
-
-Contributions to this project are welcome! If you'd like to contribute, please follow these guidelines:
-
-1. Fork the repository on GitHub.
-2. Create a new branch for your feature or bug fix.
-3. Make your changes and test thoroughly.
-4. Create a pull request with a clear description of your changes.
-
-## License
-
-This project is licensed under the [LICENSE.md] License. See the LICENSE.md file for details.
-
-For more information and usage instructions, refer to the [Python Password Manager GitHub repository](https://github.com/giedrius200/-Programu-sistemu-kokybes-projektas).
+Always remember the file password given by the password manager. It is crucial for decrypting stored passwords.
