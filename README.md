@@ -32,7 +32,7 @@ The main method will prompt the user to enter a password. The strength of the pa
 checker = PasswordCheckingStrength()
 checker.main()
 ```
-###Password Generator:
+### Password Generator:
 
 Use the about_password method to prompt the user for password preferences and generate a password accordingly.
 
@@ -42,7 +42,7 @@ generator = PasswordGenerator()
 generator.about_password()
 ```
 
-###Password Manager:
+### Password Manager:
 
 Initialize the manager with a username, then call the run method.
 
@@ -52,20 +52,20 @@ manager = PasswordManager("YourUsername")
 manager.run()
 ```
 
-Remember: Before using the manager for a user, you need to call the create_login method for that user.
+### Remember: Before using the manager for a user, you need to call the create_login method for that user.
 
 ```python
 
 create_login("YourUsername")
 ```
 
-###Additional Functions:
+### Additional Functions:
 
     ##login: Authenticates a user using their login password.
     ##create_login: Allows a new user to create a password for accessing the suite.
     ##verify_login: Verifies the hashed login password against the stored hash for a given user.
     ##change_password: Allows a user to change their login password.
 
-###Important:
+### Important:
 
 Always remember the file password given by the password manager. It is crucial for decrypting stored passwords.
