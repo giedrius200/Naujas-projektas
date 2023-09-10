@@ -5,6 +5,10 @@ import sys
 import hashlib
 from cryptography.fernet import Fernet
 
+import cryptography
+
+from cryptography.fernet import InvalidToken
+
 # Utility Functions
 def clear_screen():
     os.system("cls" if os.name == "nt" else "clear")
@@ -108,7 +112,14 @@ class PasswordManager:
             self.file_password = self.generate_file_password()
             print(f"Your file password is: {self.file_password}\nPlease remember this password!")
             self.initialize_fernet()
+            self.create_empty_passwords_file()
 
+    def create_empty_passwords_file(self):
+        """Creates an empty passwords.txt file for the user."""
+        encrypted_data = self.fernet.encrypt(str({}).encode())
+        with open(os.path.join(self.user_directory, "passwords.txt"), "wb") as file:
+            file.write(encrypted_data)
+    
     def generate_file_password(self):
         return Fernet.generate_key().decode()
 
@@ -142,8 +153,24 @@ class PasswordManager:
     def load_passwords_from_file(self):
         with open(os.path.join(self.user_directory, "passwords.txt"), "rb") as file:
             encrypted_data = file.read()
-            decrypted_data = self.fernet.decrypt(encrypted_data)
-            self.passwords = eval(decrypted_data.decode())
+            while True:  # Keep trying until a valid password is entered or a new one is generated
+                try:
+                    decrypted_data = self.fernet.decrypt(encrypted_data)
+                    self.passwords = eval(decrypted_data.decode())
+                    break  # Exit the loop if decryption is successful
+                except InvalidToken:
+                    print("Invalid file password.")
+                    choice = input("Do you want to re-enter the file password or generate a new one? (re-enter/generate): ").lower()
+                    if choice == "re-enter":
+                        self.file_password = None
+                        self.initialize_fernet()
+                    elif choice == "generate":
+                        self.file_password = self.generate_file_password()
+                        print(f"Your new file password is: {self.file_password}\nPlease remember this password!")
+                        self.initialize_fernet()
+                        break  # Exit the loop after generating a new file password
+                    else:
+                        print("Invalid choice. Please choose 're-enter' or 'generate'.")
         
     def view_all_passwords(self):
         for website, encrypted_password in self.passwords.items():
@@ -216,6 +243,7 @@ def password_manager_menu(password_manager):
             input("\nPress Enter to return to the manager menu...")
             clear_screen()
         elif choice == "4":
+            clear_screen()
             break
         else:
             print("Invalid choice. Please try again.")
@@ -281,8 +309,10 @@ def main():
                     password_manager.store_password(website, generated_password)
                     print(f"Password saved for {website}!")
             elif choice == "3":
+                clear_screen()
                 password_manager_menu(password_manager)
             elif choice == "4":
+                password_manager.save_passwords_to_file()
                 print("Goodbye!")
                 break
             else:
