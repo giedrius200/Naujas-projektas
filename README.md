@@ -61,10 +61,10 @@ create_login("YourUsername")
 
 ### Additional Functions:
 
-    ##login: Authenticates a user using their login password.
-    ##create_login: Allows a new user to create a password for accessing the suite.
-    ##verify_login: Verifies the hashed login password against the stored hash for a given user.
-    ##change_password: Allows a user to change their login password.
+1. **login**: Authenticates a user using their login password.
+2. **create_login**: Allows a new user to create a password for accessing the suite.
+3. **verify_login**: Verifies the hashed login password against the stored hash for a given user.
+4. **change_password**: Allows a user to change their login password.
 
 ### Important:
 
