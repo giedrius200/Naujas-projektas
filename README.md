@@ -41,6 +41,7 @@ Use the about_password method to prompt the user for password preferences and ge
 generator = PasswordGenerator()
 generator.about_password()
 ```
+
 ###Password Manager:
 
 Initialize the manager with a username, then call the run method.
@@ -50,12 +51,14 @@ Initialize the manager with a username, then call the run method.
 manager = PasswordManager("YourUsername")
 manager.run()
 ```
+
 Remember: Before using the manager for a user, you need to call the create_login method for that user.
 
 ```python
 
 create_login("YourUsername")
 ```
+
 ###Additional Functions:
 
     ##login: Authenticates a user using their login password.
