@@ -57,6 +57,6 @@ Contributions to this project are welcome! If you'd like to contribute, please f
 
 ## License
 
-This project is licensed under the [License Name] License. See the LICENSE.md file for details.
+This project is licensed under the [LICENSE.md] License. See the LICENSE.md file for details.
 
 For more information and usage instructions, refer to the [Python Password Manager GitHub repository](https://github.com/giedrius200/-Programu-sistemu-kokybes-projektas).
