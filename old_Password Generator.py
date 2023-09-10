@@ -5,6 +5,7 @@ import pyperclip
 import os
 import sys
 import hashlib
+from cryptography.fernet import Fernet
 from os import system
 
 
@@ -230,13 +231,101 @@ def change_password():
     else:
         print("No login information found. Create a login first.")
 
+class PasswordManager:
+    def __init__(self):
+        self.passwords = {}
+        self.file_password = None
+        self.fernet = None
+
+        self.load_passwords_from_file()
+        self.load_file_password()
+
+    def create_file_password(self):
+        # Generate a random 32-character base64 password
+        file_password = Fernet.generate_key().decode()
+        self.file_password = file_password
+
+        # Save the generated password securely, e.g., in a file
+        with open("file_password.txt", "w") as f:
+            f.write(file_password)
+
+        print("File password created successfully!")
+
+    def load_file_password(self):
+        # Load the stored file password
+        if os.path.exists("file_password.txt"):
+            with open("file_password.txt", "r") as f:
+                self.file_password = f.read()
+
+    def generate_key(self):
+        if self.file_password:
+            return hashlib.sha256(self.file_password.encode()).digest()
+        else:
+            print("Invalid or missing file password. Please create a new one.")
+
+    def initialize_fernet(self):
+        self.fernet = Fernet(self.generate_key())
+
+    def create_password(self, website, username, password):
+        if not self.fernet:
+            print("File password is required to create passwords. Please create or enter the file password.")
+            return
+
+        if website not in self.passwords:
+            self.passwords[website] = {}
+
+        self.passwords[website][username] = password
+        print("Password created successfully!")
+
+    def save_passwords_to_file(self):
+        if not self.fernet:
+            print("File password is required to save passwords to a file. Please create or enter the file password.")
+            return
+
+        encrypted_data = self.fernet.encrypt(str(self.passwords).encode())
+
+        with open("passwords.enc", "wb") as f:
+            f.write(encrypted_data)
+        print("Passwords saved securely!")
+
+    def load_passwords_from_file(self):
+        if not self.fernet:
+            print("File password is required to load passwords from a file. Please create or enter the file password.")
+            return
+
+        if os.path.exists("passwords.enc"):
+            with open("passwords.enc", "rb") as f:
+                encrypted_data = f.read()
+
+            decrypted_data = self.fernet.decrypt(encrypted_data)
+            self.passwords = eval(decrypted_data.decode())
+        else:
+            self.passwords = {}
+
+    def view_passwords_in_app(self):
+        if not self.fernet:
+            print("File password is required to view passwords. Please create or enter the file password.")
+            return
+
+        if not self.passwords:
+            print("No passwords stored.")
+            return
+
+        print("Stored Passwords:")
+        for website, creds in self.passwords.items():
+            print(f"Website: {website}")
+            for username, password in creds.items():
+                print(f"Username: {username}, Password: {password}")
+            print()
+
 def main():
     login()
+    password_manager = PasswordManager()
     while True:
         try:
             clear_screen()
-            print("\n1 | Check Password Strength\n2 | Generate Password\n3 | Išeiti iš programos\n4 | Pakeisti prisijungimo slaptažodį")
-            ur = int(input(":"))    
+            print("\n1 | Check Password Strength\n2 | Generate Password\n3 | Exit Program\n4 | Change Login Password\n5 | Store Password\n6 | View Stored Passwords")
+            ur = int(input(":"))
             if ur == 1:
                 Password_Checking().main()
             elif ur == 2:
@@ -244,7 +333,17 @@ def main():
             elif ur == 3:
                 exit_program()
             elif ur == 4:
-                change_password()
+                change_password(password_manager)
+            elif ur == 5:
+                if not password_manager.fernet:
+                    print("File password is required to create passwords. Please create or enter the file password.")
+                else:
+                    website = input("Enter website: ")
+                    username = input("Enter username: ")
+                    password = input("Enter password: ")
+                    password_manager.create_password(website, username, password)
+            elif ur == 6:
+                password_manager.view_passwords_in_app()
         except KeyboardInterrupt:  # Catch KeyboardInterrupt (Ctrl+C) to exit gracefully
             exit_program()
 
