@@ -1,4 +1,4 @@
-# Password Utilities Suite
+# Password Utilities Suite ( for GUI version click [here](https://github.com/giedrius200/-Programu-sistemu-kokybes-projektas/tree/GUI)
 
 This suite provides a set of utilities to manage and assess passwords. The main features include password strength checking, password generation, and a basic password manager.
 
