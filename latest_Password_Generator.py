@@ -9,6 +9,8 @@ import cryptography
 
 from cryptography.fernet import InvalidToken
 
+import shutil
+
 # Utility Functions
 def clear_screen():
     os.system("cls" if os.name == "nt" else "clear")
@@ -239,6 +241,20 @@ def user_login():
             print("Goodbye!")
             sys.exit()
 
+def delete_user(username):
+    user_directory = f"data/{username}"
+    confirmation = input(f"Are you sure you want to delete your user account '{username}' and all stored data? (yes/no): ").lower()
+    if confirmation == "yes":
+        try:
+            shutil.rmtree(user_directory)
+            print(f"User account '{username}' and associated data have been deleted.")
+            clear_screen()
+            main()
+        except FileNotFoundError:
+            print(f"User account '{username}' does not exist.")
+    else:
+        print("User account deletion canceled.")
+
 def password_manager_menu(password_manager):
     while True:
         print("\nPassword Manager Menu:")
@@ -277,7 +293,8 @@ def main():
             print("1. Check Password Strength")
             print("2. Generate Password")
             print("3. Password Manager")
-            print("4. Exit")
+            print("4. Delete User Account")
+            print("5. Exit")
             choice = input("Enter your choice: ")
 
             if choice == "1":
@@ -332,6 +349,8 @@ def main():
                 clear_screen()
                 password_manager_menu(password_manager)
             elif choice == "4":
+                delete_user(username)
+            elif choice == "5":
                 password_manager.save_passwords_to_file()
                 print("Goodbye!")
                 break
