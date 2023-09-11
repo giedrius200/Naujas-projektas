@@ -88,12 +88,16 @@ class PasswordGenerator:
         return ''.join(random.choice(charset) for _ in range(self.length))
 
 class PasswordManager:
-    def __init__(self, username):
+    def __init__(self, username, is_signup=False):
         self.username = username
         self.user_directory = f"data/{self.username}"
         self.passwords = {}
         self.file_password = None
         self.fernet = None
+
+        if is_signup and os.path.exists(self.user_directory):
+            messagebox.showinfo("Signup Error", "This username already exists. Please choose a different one.")
+            return
 
         if not os.path.exists(self.user_directory):
             os.makedirs(self.user_directory, exist_ok=True)
@@ -103,7 +107,7 @@ class PasswordManager:
             self.load_passwords_from_file()
         else:
             self.file_password = self.generate_file_password()
-            copy_to_clipboard(self.file_password)
+            self.copy_file_password_to_clipboard()
             messagebox.showinfo("File Password",
                                 f"Your file password is: {self.file_password}\n"
                                 "It has been copied to the clipboard for your convenience. "
@@ -247,6 +251,13 @@ def launch_login_signup_screen():
 
     def sign_up():
         username = simpledialog.askstring("Sign Up", "Enter your desired username:")
+        user_directory = f"data/{username}"
+
+        # Check if user directory already exists
+        if os.path.exists(user_directory):
+            messagebox.showerror("Error", "This username already exists. Please choose a different one.")
+            return
+
         password = simpledialog.askstring("Sign Up", "Enter your desired login password:", show="*")
         user_auth.sign_up(username, password)
         
