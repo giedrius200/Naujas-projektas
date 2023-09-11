@@ -216,6 +216,13 @@ class PasswordManager:
             else:
                 messagebox.showinfo("Website Not Found", f"Website '{selected_website}' not found in stored passwords.")
 
+    def export_to_txt(self):
+        with open(os.path.join(self.user_directory, "exported_passwords.txt"), "w") as file:
+            for website, encrypted_password in self.passwords.items():
+                decrypted_password = self.decode_password(encrypted_password)
+                file.write(f"Website: {website}\nPassword: {decrypted_password}\n\n")
+        messagebox.showinfo("Export Successful", "Passwords have been exported to exported_passwords.txt in your directory.")
+
 class UserAuth:
     def __init__(self):
         self.users_db = "users_db.txt"
@@ -390,6 +397,8 @@ def launch_main_app(username):
     file_menu = tk.Menu(menubar, tearoff=0)
     menubar.add_cascade(label="File", menu=file_menu)
     file_menu.add_command(label="Exit", command=lambda: password_manager.save_and_exit())
+    
+    file_menu.add_command(label="Export to TXT", command=password_manager.export_to_txt)
 
     password_menu = tk.Menu(menubar, tearoff=0)
     menubar.add_cascade(label="Password", menu=password_menu)
