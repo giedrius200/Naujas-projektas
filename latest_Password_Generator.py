@@ -1,28 +1,20 @@
+import tkinter as tk
+from tkinter import messagebox, simpledialog
 import string
 import random
 import os
 import sys
-import hashlib
-from cryptography.fernet import Fernet
-
-import cryptography
-
-from cryptography.fernet import InvalidToken
-
+from cryptography.fernet import Fernet, InvalidToken
 import shutil
-
-# Utility Functions
-def clear_screen():
-    os.system("cls" if os.name == "nt" else "clear")
+import hashlib
 
 def copy_to_clipboard(data):
     try:
         import pyperclip
         pyperclip.copy(data)
     except ImportError:
-        print("Pyperclip not installed. Cannot copy to clipboard.")
+        messagebox.showinfo("Info", "Pyperclip not installed. Cannot copy to clipboard.")
 
-# Password Strength Checker
 class PasswordChecker:
     def __init__(self, password):
         self.password = password
@@ -44,7 +36,7 @@ class PasswordChecker:
         score += punctuation_count
         score += whitespace_count * 1.5
         score += len(self.password) * 0.5
-        
+
         max_score = len(self.password) * 1.5
 
         strength_label = ""
@@ -70,9 +62,9 @@ class PasswordChecker:
             "max_score": max_score
         }
 
-# Password Generator
 class PasswordGenerator:
-    def __init__(self, length, use_digits=True, use_lowercase=True, use_uppercase=True, use_special=True, use_whitespace=False):
+    def __init__(self, length, use_digits=True, use_lowercase=True, use_uppercase=True, use_special=True,
+                 use_whitespace=False):
         self.length = length
         self.use_digits = use_digits
         self.use_lowercase = use_lowercase
@@ -95,7 +87,6 @@ class PasswordGenerator:
 
         return ''.join(random.choice(charset) for _ in range(self.length))
 
-# Password Manager
 class PasswordManager:
     def __init__(self, username):
         self.username = username
@@ -112,34 +103,49 @@ class PasswordManager:
             self.load_passwords_from_file()
         else:
             self.file_password = self.generate_file_password()
-            print(f"Your file password is: {self.file_password}\nPlease remember this password!")
+            copy_to_clipboard(self.file_password)
+            messagebox.showinfo("File Password",
+                                f"Your file password is: {self.file_password}\n"
+                                "It has been copied to the clipboard for your convenience. "
+                                "Please remember this password!")
             self.initialize_fernet()
             self.create_empty_passwords_file()
 
     def create_empty_passwords_file(self):
-        """Creates an empty passwords.txt file for the user."""
         encrypted_data = self.fernet.encrypt(str({}).encode())
         with open(os.path.join(self.user_directory, "passwords.txt"), "wb") as file:
             file.write(encrypted_data)
-    
+
+    def copy_file_password_to_clipboard(self):
+        if self.file_password:
+            copy_to_clipboard(self.file_password)
+
     def generate_file_password(self):
         return Fernet.generate_key().decode()
 
     def initialize_fernet(self):
         while True:
             if not self.file_password:
-                self.file_password = input("Enter your file password: ")
+                self.file_password = simpledialog.askstring("File Password", "Enter your file password:")
 
             try:
                 self.fernet = Fernet(self.file_password.encode())
-                break  # If successful, break out of the loop
+                break
             except ValueError:
-                print("Invalid file password. Please enter a valid 44-character file password.")
-                self.file_password = None  # Reset the file password to prompt the user again
-                
+                messagebox.showinfo("Invalid Password", "Invalid file password. Please enter a valid 44-character file password.")
+                self.file_password = None
+
     def store_password(self, website, password):
         encrypted_password = self.fernet.encrypt(password.encode()).decode()
         self.passwords[website] = encrypted_password
+        self.save_passwords_to_file()
+
+    def decode_password(self, encoded_password):
+        try:
+            decoded_password = self.fernet.decrypt(encoded_password.encode()).decode()
+            return decoded_password
+        except InvalidToken:
+            return "Decryption Error"
 
     def retrieve_password(self, website):
         encrypted_password = self.passwords.get(website)
@@ -155,212 +161,231 @@ class PasswordManager:
     def load_passwords_from_file(self):
         with open(os.path.join(self.user_directory, "passwords.txt"), "rb") as file:
             encrypted_data = file.read()
-            while True:  # Keep trying until a valid password is entered or a new one is generated
+            while True:
                 try:
                     decrypted_data = self.fernet.decrypt(encrypted_data)
                     self.passwords = eval(decrypted_data.decode())
-                    break  # Exit the loop if decryption is successful
+                    break
                 except InvalidToken:
-                    print("Invalid file password.")
-                    choice = input("Do you want to re-enter the file password or generate a new one? (re-enter/generate): ").lower()
+                    messagebox.showinfo("Invalid Password", "Invalid file password.")
+                    choice = simpledialog.askstring("File Password",
+                                                    "Do you want to re-enter the file password or generate a new one? (re-enter/generate): ").lower()
                     if choice == "re-enter":
                         self.file_password = None
                         self.initialize_fernet()
                     elif choice == "generate":
                         self.file_password = self.generate_file_password()
-                        print(f"Your new file password is: {self.file_password}\nPlease remember this password!")
+                        messagebox.showinfo("File Password",
+                                            f"Your new file password is: {self.file_password}\nPlease remember this password!")
                         self.initialize_fernet()
-                        break  # Exit the loop after generating a new file password
+                        break
                     else:
-                        print("Invalid choice. Please choose 're-enter' or 'generate'.")
-        
-    def view_all_passwords(self):
-        for website, encrypted_password in self.passwords.items():
-            decrypted_password = self.fernet.decrypt(encrypted_password.encode()).decode()
-            print(f"Website: {website}, Password: {decrypted_password}")
-            
-    def delete_password(self):
-        if not self.passwords:
-            print("No passwords stored.")
-            return
+                        messagebox.showinfo("Invalid Choice", "Invalid choice. Please choose 're-enter' or 'generate'.")
 
-        print("\nStored Websites:")
-        for idx, website in enumerate(self.passwords.keys(), 1):
-            print(f"{idx}. {website}")
-
-        try:
-            choice = int(input("\nEnter the number of the website you want to delete: "))
-            website_to_delete = list(self.passwords.keys())[choice - 1]
-            del self.passwords[website_to_delete]
-            print(f"Password for {website_to_delete} has been deleted.")
-        except (ValueError, IndexError):
-            print("Invalid choice. Please select a valid number.")
-
-def create_login(username):
-    password = input(f"Create a login password for {username}: ")
-    user_directory = f"data/{username}"
-    os.makedirs(user_directory, exist_ok=True)
-
-    password_hash = hashlib.sha256(password.encode()).hexdigest()
-    with open(f"{user_directory}/login_info.txt", "w") as f:
-        f.write(f"{username},{password_hash}")
-    print(f"Login created successfully for {username}!")
-
-def verify_login(username, password):
-    user_directory = f"data/{username}"
-    if os.path.exists(f"{user_directory}/login_info.txt"):
-        with open(f"{user_directory}/login_info.txt", "r") as f:
-            stored_username, stored_password_hash = f.readline().strip().split(",")
-        entered_password_hash = hashlib.sha256(password.encode()).hexdigest()
-        return username == stored_username and entered_password_hash == stored_password_hash
-    return False
-
-def user_login():
-    username = input("Enter your username: ")
-    user_directory = f"data/{username}"
-
-    if os.path.exists(user_directory):
-        while True:  # Keep prompting until a correct password is entered or the user decides to exit
-            password = input("Enter your login password: ")
-            if verify_login(username, password):
-                print(f"Login successful for {username}!")
-                return username
-            else:
-                print("Invalid password. Please try again.")
-                continue_choice = input("Do you want to try again? (yes/no): ").lower()
-                if continue_choice != "yes":
-                    print("Goodbye!")
-                    sys.exit()
-    else:
-        print(f"Username '{username}' does not exist. Would you like to create a new account? (yes/no)")
-        choice = input(": ").lower()
-        if choice == "yes":
-            create_login(username)
-            return username
-        else:
-            print("Goodbye!")
-            sys.exit()
-
-def delete_user(username):
-    user_directory = f"data/{username}"
-    confirmation = input(f"Are you sure you want to delete your user account '{username}' and all stored data? (yes/no): ").lower()
-    if confirmation == "yes":
-        try:
-            shutil.rmtree(user_directory)
-            print(f"User account '{username}' and associated data have been deleted.")
-            clear_screen()
-            main()
-        except FileNotFoundError:
-            print(f"User account '{username}' does not exist.")
-    else:
-        print("User account deletion canceled.")
-
-def password_manager_menu(password_manager):
-    while True:
-        print("\nPassword Manager Menu:")
-        print("1. Store Password")
-        print("2. Retrieve Password")
-        print("3. View Stored Passwords")
-        print("4. Delete Password")
-        print("5. Return to Main Menu")
-        choice = input("Enter your choice: ")
-
-        if choice == "1":
-            website = input("Enter the website for which you want to store a password: ")
-            password = input("Enter the password: ")
-            password_manager.store_password(website, password)
-        elif choice == "2":
-            website = input("Enter the website for which you want to retrieve the password: ")
-            password_manager.retrieve_password(website)
-        elif choice == "3":
-            password_manager.view_all_passwords()
-            input("\nPress Enter to return to the manager menu...")
-            clear_screen()
-        elif choice == "4":
-            password_manager.delete_password()
-        elif choice == "5":
-            clear_screen()
-            break
-        else:
-            print("Invalid choice. Please try again.")
-
-def main():
-    username = user_login()
-    password_manager = PasswordManager(username)
-    try:
-        while True:
-            print("\nMain Menu:")
-            print("1. Check Password Strength")
-            print("2. Generate Password")
-            print("3. Password Manager")
-            print("4. Delete User Account")
-            print("5. Exit")
-            choice = input("Enter your choice: ")
-
-            if choice == "1":
-                print("\nCheck Password Strength:")
-                print("1. Enter password manually")
-                print("2. Select from stored passwords")
-                sub_choice = input("Enter your choice: ")
-
-                if sub_choice == "1":
-                    password_to_check = input("Enter the password: ")
-                elif sub_choice == "2":
-                    if not password_manager.passwords:
-                        print("No passwords stored yet.")
-                        continue
-                    print("\nStored Websites:")
-                    for idx, website in enumerate(password_manager.passwords.keys(), 1):
-                        print(f"{idx}. {website}")
-                    website_choice = int(input("Select a website by number: "))
-                    website = list(password_manager.passwords.keys())[website_choice - 1]
-                    password_to_check = password_manager.retrieve_password(website)
-                else:
-                    print("Invalid choice. Please try again.")
-                    continue
-
-                checker = PasswordChecker(password_to_check)
-                strength_stats = checker.strength()
-                print(f"\nPassword Strength for '{password_to_check}': {strength_stats['strength_label']}")
-                print(f"Lowercase characters: {strength_stats['lowercase_count']}")
-                print(f"Uppercase characters: {strength_stats['uppercase_count']}")
-                print(f"Digits: {strength_stats['digit_count']}")
-                print(f"Special characters: {strength_stats['punctuation_count']}")
-                print(f"Whitespace characters: {strength_stats['whitespace_count']}")
-                print(f"Total Score: {strength_stats['total_score']} out of {strength_stats['max_score']}")
-                input("\nPress Enter to return to the main menu...")
-                clear_screen()
-            elif choice == "2":
-                length = int(input("Enter desired password length: "))
-                use_digits = input("Include digits (0-9)? (yes/no): ").lower() == "yes"
-                use_lowercase = input("Include lowercase letters (a-z)? (yes/no): ").lower() == "yes"
-                use_uppercase = input("Include uppercase letters (A-Z)? (yes/no): ").lower() == "yes"
-                use_special = input("Include special characters (e.g., !@#$%^&*)? (yes/no): ").lower() == "yes"
-                use_whitespace = input("Include whitespace (spaces)? (yes/no): ").lower() == "yes"
-                generator = PasswordGenerator(length, use_digits, use_lowercase, use_uppercase, use_special, use_whitespace)
-                generated_password = generator.generate()
-                print(f"Generated Password: {generated_password}")
-                save_to_manager = input("Do you want to save this password to the password manager? (yes/no): ").lower()
-                if save_to_manager == "yes":
-                    website = input("Enter the website for which this password was generated: ")
-                    password_manager.store_password(website, generated_password)
-                    print(f"Password saved for {website}!")
-            elif choice == "3":
-                clear_screen()
-                password_manager_menu(password_manager)
-            elif choice == "4":
-                delete_user(username)
-            elif choice == "5":
-                password_manager.save_passwords_to_file()
-                print("Goodbye!")
-                break
-            else:
-                print("Invalid choice. Please try again.")
-    except KeyboardInterrupt:
-        print("\nDetected keyboard interrupt. Saving passwords and exiting...")
-        password_manager.save_passwords_to_file()
+    def save_and_exit(self):
+        self.save_passwords_to_file()
         sys.exit()
 
+    def view_all_passwords(self):
+        passwords_text.delete(1.0, tk.END)
+        for website, encrypted_password in self.passwords.items():
+            decrypted_password = self.decode_password(encrypted_password)
+            passwords_text.insert(tk.END, f"Website: {website}\nPassword: {decrypted_password}\n\n")
+
+    def delete_password(self):
+        if not self.passwords:
+            messagebox.showinfo("No Passwords", "No passwords stored.")
+            return
+
+        stored_websites = list(self.passwords.keys())
+        selected_website = simpledialog.askstring("Delete Password",
+                                                  "Enter the website for which you want to delete the password:",
+                                                  initialvalue=stored_websites[0])
+
+        if selected_website:
+            if selected_website in self.passwords:
+                del self.passwords[selected_website]
+                messagebox.showinfo("Password Deleted", f"Password for {selected_website} has been deleted.")
+            else:
+                messagebox.showinfo("Website Not Found", f"Website '{selected_website}' not found in stored passwords.")
+
+class UserAuth:
+    def __init__(self):
+        self.users_db = "users_db.txt"
+        if not os.path.exists(self.users_db):
+            with open(self.users_db, 'w') as f:
+                pass
+
+    def hash_password(self, password):
+        return hashlib.sha256(password.encode()).hexdigest()
+
+    def sign_up(self, username, password):
+        with open(self.users_db, 'a') as f:
+            f.write(f"{username}:{self.hash_password(password)}\n")
+
+    def log_in(self, username, password):
+        with open(self.users_db, 'r') as f:
+            lines = f.readlines()
+            for line in lines:
+                user, hashed_password = line.strip().split(":")
+                if user == username and hashed_password == self.hash_password(password):
+                    return True
+            return False
+
+def launch_login_signup_screen():
+    def log_in():
+        username = simpledialog.askstring("Log In", "Enter your username:")
+        password = simpledialog.askstring("Log In", "Enter your login password:", show="*")
+        if user_auth.log_in(username, password):
+            login_signup_screen.destroy()
+            launch_main_app(username)
+        else:
+            messagebox.showerror("Error", "Invalid username or password.")
+
+    def sign_up():
+        username = simpledialog.askstring("Sign Up", "Enter your desired username:")
+        password = simpledialog.askstring("Sign Up", "Enter your desired login password:", show="*")
+        user_auth.sign_up(username, password)
+        
+        # Create a temporary password manager instance to generate a file password
+        temp_password_manager = PasswordManager(username)
+        temp_password_manager.copy_file_password_to_clipboard()
+        
+        messagebox.showinfo("Success", "Account created successfully! Your file password has been copied to the clipboard. Please save it securely.")
+        login_signup_screen.destroy()
+        launch_main_app(username)
+
+    login_signup_screen = tk.Tk()
+    login_signup_screen.title("Login or Sign Up")
+
+    login_button = tk.Button(login_signup_screen, text="Log In", command=log_in)
+    signup_button = tk.Button(login_signup_screen, text="Sign Up", command=sign_up)
+
+    login_button.pack(pady=10)
+    signup_button.pack(pady=10)
+
+    login_signup_screen.mainloop()
+
+def launch_main_app(username):
+    global root, password_manager
+    root = tk.Tk()
+    root.title("Password Manager")
+    password_manager = PasswordManager(username)
+
+    # GUI Functions
+    def check_password_strength():
+        password_to_check = simpledialog.askstring("Check Password Strength", "Enter the password:")
+        if password_to_check:
+            checker = PasswordChecker(password_to_check)
+            strength_stats = checker.strength()
+            messagebox.showinfo(
+                "Password Strength",
+                f"Password Strength: {strength_stats['strength_label']}\n"
+                f"Lowercase characters: {strength_stats['lowercase_count']}\n"
+                f"Uppercase characters: {strength_stats['uppercase_count']}\n"
+                f"Digits: {strength_stats['digit_count']}\n"
+                f"Special characters: {strength_stats['punctuation_count']}\n"
+                f"Whitespace characters: {strength_stats['whitespace_count']}\n"
+                f"Total Score: {strength_stats['total_score']} out of {strength_stats['max_score']}")   
+
+    def generate_password():
+        length = simpledialog.askinteger("Generate Password", "Enter desired password length:")
+        if length:
+            use_digits = messagebox.askyesno("Generate Password", "Include digits (0-9)?")
+            use_lowercase = messagebox.askyesno("Generate Password", "Include lowercase letters (a-z)?")
+            use_uppercase = messagebox.askyesno("Generate Password", "Include uppercase letters (A-Z)?")
+            use_special = messagebox.askyesno("Generate Password", "Include special characters (!@#$%^&*()_-+=<>?)?")
+            use_whitespace = messagebox.askyesno("Generate Password", "Include whitespace characters?")
+
+            generator = PasswordGenerator(
+                length,
+                use_digits=use_digits,
+                use_lowercase=use_lowercase,
+                use_uppercase=use_uppercase,
+                use_special=use_special,
+                use_whitespace=use_whitespace
+            )
+
+            generated_password = generator.generate()
+            messagebox.showinfo("Generated Password", f"Generated Password: {generated_password}")
+            save_to_manager = messagebox.askyesno("Save to Password Manager",
+                                                "Do you want to save this password to the password manager?")
+            if save_to_manager:
+                website = simpledialog.askstring("Save Password", "Enter the website for which this password was generated:")
+                if website:
+                    password_manager.store_password(website, generated_password)
+                    messagebox.showinfo("Password Saved", f"Password saved for {website}!")
+
+    def store_password():
+        website = simpledialog.askstring("Store Password", "Enter the website for which you want to store a password:")
+        password = simpledialog.askstring("Store Password", "Enter the password:")
+        if website and password:
+            password_manager.store_password(website, password)
+
+    def retrieve_password():
+        website = simpledialog.askstring("Retrieve Password", "Enter the website for which you want to retrieve the password:")
+        if website:
+            password = password_manager.retrieve_password(website)
+            if password:
+                copy_to_clipboard(password)
+                messagebox.showinfo("Password Retrieved", f"Password for {website}:\n{password}\n\n"
+                                                         "The password has been copied to the clipboard.")
+            else:
+                messagebox.showinfo("Password Not Found", f"Password for {website} not found.")
+
+    def delete_password():
+        website = simpledialog.askstring("Delete Password", "Enter the website for which you want to delete the password:")
+        if website:
+            password_manager.delete_password(website)
+
+    def display_stored_passwords():
+        passwords_text.config(state="normal")  # Enable text box for editing
+        passwords_text.delete(1.0, tk.END)  # Clear the text box
+        passwords_text.insert(tk.END, "Stored Passwords:\n")
+        for website, password in password_manager.passwords.items():
+            decoded_password = password_manager.decode_password(password)
+            passwords_text.insert(tk.END, f"Website: {website}\nPassword: {decoded_password}\n\n")
+        passwords_text.config(state="disabled")  # Disable text box for editing
+
+
+    # Password Manager buttons
+    store_password_button = tk.Button(root, text="Store Password", command=store_password)
+    retrieve_password_button = tk.Button(root, text="Retrieve Password", command=retrieve_password)
+    view_passwords_button = tk.Button(root, text="View Stored Passwords", command=display_stored_passwords)
+    delete_password_button = tk.Button(root, text="Delete Password", command=delete_password)
+    return_to_menu_button = tk.Button(root, text="Return to Main Menu", command=root.destroy)
+
+    # Position the buttons
+    store_password_button.grid(row=6, column=0, padx=10, pady=5)
+    retrieve_password_button.grid(row=6, column=1, padx=10, pady=5)
+    view_passwords_button.grid(row=7, column=0, padx=10, pady=5)
+    delete_password_button.grid(row=7, column=1, padx=10, pady=5)
+    return_to_menu_button.grid(row=8, column=0, columnspan=2, pady=10)
+
+    # Add a button to generate and copy the file password
+    generate_file_password_button = tk.Button(root, text="Generate File Password and Copy to Clipboard",
+                                              command=lambda: password_manager.copy_file_password_to_clipboard())
+    generate_file_password_button.grid(row=8, column=0, padx=10, pady=5, columnspan=2)
+
+    # Create a text widget to display stored passwords
+    passwords_text = tk.Text(root, wrap=tk.WORD, width=40, height=10, state="disabled")
+    passwords_text.grid(row=9, column=0, padx=10, pady=10, columnspan=2)
+
+    # Menu Bar
+    menubar = tk.Menu(root)
+    root.config(menu=menubar)
+
+    file_menu = tk.Menu(menubar, tearoff=0)
+    menubar.add_cascade(label="File", menu=file_menu)
+    file_menu.add_command(label="Exit", command=lambda: password_manager.save_and_exit())
+
+    password_menu = tk.Menu(menubar, tearoff=0)
+    menubar.add_cascade(label="Password", menu=password_menu)
+    password_menu.add_command(label="Check Password Strength", command=check_password_strength)
+    password_menu.add_command(label="Generate Password", command=generate_password)
+
+    root.mainloop()
 
 if __name__ == '__main__':
-    main()
+    user_auth = UserAuth()
+    launch_login_signup_screen()
