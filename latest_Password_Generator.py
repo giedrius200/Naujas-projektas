@@ -130,10 +130,24 @@ class PasswordManager:
 
             try:
                 self.fernet = Fernet(self.file_password.encode())
-                break
-            except ValueError:
-                messagebox.showinfo("Invalid Password", "Invalid file password. Please enter a valid 44-character file password.")
-                self.file_password = None
+                break  # If successful, break out of the loop
+            except (ValueError, InvalidToken):
+                choice = messagebox.askyesno("Invalid Password", 
+                                            "Invalid file password. Do you want to generate a new one?")
+                if choice:
+                    self.file_password = self.generate_file_password()
+                    self.copy_file_password_to_clipboard()
+                    messagebox.showinfo("File Password",
+                                        f"Your new file password is: {self.file_password}\n"
+                                        "It has been copied to the clipboard. Please remember this password!")
+                    self.fernet = Fernet(self.file_password.encode())
+                    self.save_passwords_to_file()  # Re-encrypt the passwords file with the new file password
+                    break  # Exit the loop after generating a new file password
+                else:
+                    self.file_password = None  # Reset the file password to prompt the user again
+
+
+
 
     def store_password(self, website, password):
         encrypted_password = self.fernet.encrypt(password.encode()).decode()
@@ -161,26 +175,14 @@ class PasswordManager:
     def load_passwords_from_file(self):
         with open(os.path.join(self.user_directory, "passwords.txt"), "rb") as file:
             encrypted_data = file.read()
-            while True:
-                try:
-                    decrypted_data = self.fernet.decrypt(encrypted_data)
-                    self.passwords = eval(decrypted_data.decode())
-                    break
-                except InvalidToken:
-                    messagebox.showinfo("Invalid Password", "Invalid file password.")
-                    choice = simpledialog.askstring("File Password",
-                                                    "Do you want to re-enter the file password or generate a new one? (re-enter/generate): ").lower()
-                    if choice == "re-enter":
-                        self.file_password = None
-                        self.initialize_fernet()
-                    elif choice == "generate":
-                        self.file_password = self.generate_file_password()
-                        messagebox.showinfo("File Password",
-                                            f"Your new file password is: {self.file_password}\nPlease remember this password!")
-                        self.initialize_fernet()
-                        break
-                    else:
-                        messagebox.showinfo("Invalid Choice", "Invalid choice. Please choose 're-enter' or 'generate'.")
+            try:
+                decrypted_data = self.fernet.decrypt(encrypted_data)
+                self.passwords = eval(decrypted_data.decode())
+            except InvalidToken:
+                self.file_password = None
+                self.initialize_fernet()
+                self.load_passwords_from_file()  # Recursive call to try loading again with the new fernet key
+
 
     def save_and_exit(self):
         self.save_passwords_to_file()
@@ -205,6 +207,7 @@ class PasswordManager:
         if selected_website:
             if selected_website in self.passwords:
                 del self.passwords[selected_website]
+                self.save_passwords_to_file()
                 messagebox.showinfo("Password Deleted", f"Password for {selected_website} has been deleted.")
             else:
                 messagebox.showinfo("Website Not Found", f"Website '{selected_website}' not found in stored passwords.")
@@ -334,9 +337,7 @@ def launch_main_app(username):
                 messagebox.showinfo("Password Not Found", f"Password for {website} not found.")
 
     def delete_password():
-        website = simpledialog.askstring("Delete Password", "Enter the website for which you want to delete the password:")
-        if website:
-            password_manager.delete_password(website)
+            password_manager.delete_password()
 
     def display_stored_passwords():
         passwords_text.config(state="normal")  # Enable text box for editing
@@ -363,7 +364,7 @@ def launch_main_app(username):
     return_to_menu_button.grid(row=8, column=0, columnspan=2, pady=10)
 
     # Add a button to generate and copy the file password
-    generate_file_password_button = tk.Button(root, text="Generate File Password and Copy to Clipboard",
+    generate_file_password_button = tk.Button(root, text="Copy file password to Clipboard",
                                               command=lambda: password_manager.copy_file_password_to_clipboard())
     generate_file_password_button.grid(row=8, column=0, padx=10, pady=5, columnspan=2)
 
