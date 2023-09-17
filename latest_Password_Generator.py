@@ -360,10 +360,21 @@ def launch_main_app(username):
     def display_stored_passwords():
         passwords_text.config(state="normal")  # Enable text box for editing
         passwords_text.delete(1.0, tk.END)  # Clear the text box
-        passwords_text.insert(tk.END, "Stored Passwords:\n")
+
+        # Define font styles
+        passwords_text.tag_configure("header", font=("Arial", 14, "bold"))
+        passwords_text.tag_configure("details", font=("Consolas", 13))
+
+        # Insert header with the "header" tag
+        passwords_text.insert(tk.END, "Stored Passwords:\n", "header")
+
         for website, password in password_manager.passwords.items():
             decoded_password = password_manager.decode_password(password)
-            passwords_text.insert(tk.END, f"Website: {website}\nPassword: {decoded_password}\n\n")
+            
+            # Insert website and password details with the "details" tag
+            passwords_text.insert(tk.END, f"Website: {website}\n", "details")
+            passwords_text.insert(tk.END, f"Password: {decoded_password}\n\n", "details")
+
         passwords_text.config(state="disabled")  # Disable text box for editing
 
 
@@ -387,8 +398,13 @@ def launch_main_app(username):
     generate_file_password_button.grid(row=8, column=0, padx=10, pady=5, columnspan=2)
 
     # Create a text widget to display stored passwords
-    passwords_text = tk.Text(root, wrap=tk.WORD, width=40, height=10, state="disabled")
-    passwords_text.grid(row=9, column=0, padx=10, pady=10, columnspan=2)
+    passwords_text = tk.Text(root, wrap=tk.WORD, state="disabled")
+    passwords_text.grid(row=9, column=0, padx=10, pady=10, columnspan=2, sticky="nsew")
+
+    # Configure the grid to expand the row and column containing passwords_text
+    root.grid_rowconfigure(9, weight=1)
+    root.grid_columnconfigure(0, weight=1)
+    root.grid_columnconfigure(1, weight=1)
 
     # Menu Bar
     menubar = tk.Menu(root)
